@@ -34,6 +34,11 @@ def fetch_linkedin_jobs(settings: Settings) -> list[dict[str, Any]]:
     run = client.actor(apify_cfg["actor_id"]).call(
         run_input=actor_input,
         memory_mbytes=apify_cfg.get("memory_mb"),
+        # This is distinct from actor_input's own "maxItems" field: that one is an
+        # actor-specific input value, while this is the platform-level pay-per-result
+        # billing cap (what the actor's "Maximum charged results" warning refers to).
+        # Both need to be set for pay-per-result actors like this one.
+        max_items=actor_input.get("maxItems"),
     )
 
     dataset_id = get_default_dataset_id(run)
