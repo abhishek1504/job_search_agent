@@ -87,10 +87,32 @@ in your Google Sheet.
 
 Edit these freely — they're plain text, no need to touch the code.
 
+## Running it from GitHub Actions
+
+`.env` and `service_account.json` hold real secrets, so they're gitignored and never get pushed to
+GitHub (see `.gitignore`). To run the agent from GitHub itself instead of your own machine, use
+GitHub Actions Secrets — the workflow at `.github/workflows/run.yml` writes `.env` and
+`service_account.json` from those secrets at the start of each run, then deletes itself along with
+the whole runner when the job finishes.
+
+1. On GitHub, go to your repo → **Settings → Secrets and variables → Actions → New repository secret**,
+   and add:
+   - `APIFY_API_TOKEN`
+   - `OPENAI_API_KEY`
+   - `GOOGLE_SERVICE_ACCOUNT_JSON` — paste the **entire contents** of your `service_account.json` file
+     (the whole JSON, not a file path)
+   - Optional, only if you use `scraper_mode: "authenticated"`: `LINKEDIN_COOKIES_JSON` (entire
+     exported cookies JSON) and `LINKEDIN_USER_AGENT`
+2. Go to the **Actions** tab → **Run Job Search Agent** → **Run workflow**. It's manual-trigger-only
+   (no schedule), so it only runs — and only spends Apify/OpenAI usage — when you click it.
+3. Results land in your Google Sheet as usual. If `resume_generation.enabled` is on, the generated
+   PDFs are attached to the workflow run as a downloadable artifact (the runner itself is thrown away
+   after each run, so nothing persists there otherwise).
+
 ## Notes
 
 - Matches the n8n Filter node's threshold exactly: `score > 7` by default (i.e. 8, 9, 10 pass).
 - `sheets.append_or_update` mirrors n8n's `appendOrUpdate` operation: it looks for an existing
   row with a matching `Job ID` and updates it in place, otherwise appends a new row.
-- This is a manual-run script (per your setup choice) — call `python main.py` whenever you want
-  a fresh scrape + score + sheet update. Wrap it in cron / a scheduler later if you want it automatic.
+- Locally, this is a manual-run script — call `python main.py` whenever you want a fresh
+  scrape + score + sheet update. From GitHub, use the Actions workflow above the same way.

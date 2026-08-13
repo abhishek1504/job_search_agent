@@ -1,3 +1,12 @@
-__pycache__
+__pycache__/
+*.pyc
+.venv/
+
+# Secrets — never commit these
 .env
-.env.example
+service_account.json
+linkedin_cookies.json
+
+# Generated output
+output/
+logs/

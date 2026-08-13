@@ -1,0 +1,68 @@
+name: Run Job Search Agent
+
+# Manual trigger only — click "Run workflow" in the Actions tab whenever you
+# want a fresh scrape + score + Google Sheet update. No schedule, so it never
+# burns Apify/OpenAI usage without you asking for it.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  run-agent:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Write credentials from repo secrets
+        env:
+          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          LINKEDIN_COOKIES_JSON: ${{ secrets.LINKEDIN_COOKIES_JSON }}
+          LINKEDIN_USER_AGENT: ${{ secrets.LINKEDIN_USER_AGENT }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${APIFY_API_TOKEN}" ] || [ -z "${OPENAI_API_KEY}" ] || [ -z "${GOOGLE_SERVICE_ACCOUNT_JSON}" ]; then
+            echo "Missing one or more required repo secrets: APIFY_API_TOKEN, OPENAI_API_KEY, GOOGLE_SERVICE_ACCOUNT_JSON" >&2
+            echo "Set them under Settings -> Secrets and variables -> Actions." >&2
+            exit 1
+          fi
+
+          cat > .env << EOF
+          APIFY_API_TOKEN=${APIFY_API_TOKEN}
+          OPENAI_API_KEY=${OPENAI_API_KEY}
+          GOOGLE_SERVICE_ACCOUNT_FILE=./service_account.json
+          LINKEDIN_COOKIES_FILE=./linkedin_cookies.json
+          LINKEDIN_USER_AGENT=${LINKEDIN_USER_AGENT}
+          EOF
+
+          echo "${GOOGLE_SERVICE_ACCOUNT_JSON}" > service_account.json
+
+          # Only used if config.yaml has scraper_mode: "authenticated" — optional.
+          if [ -n "${LINKEDIN_COOKIES_JSON}" ]; then
+            echo "${LINKEDIN_COOKIES_JSON}" > linkedin_cookies.json
+          fi
+
+      - name: Run agent
+        run: python main.py
+
+      - name: Upload logs / generated resumes (if any)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: job-search-agent-output
+          path: |
+            output/**
+            logs/**
+          if-no-files-found: ignore
