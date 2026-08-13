@@ -14,7 +14,7 @@ in your Google Sheet.
 | Curate Linkedin jobs (OpenAI) | `src/scorer.py` |
 | Filter (score > 7) | inline check in `main.py` |
 | Update Linkedin jobs (Google Sheets appendOrUpdate) | `src/sheets.py` |
-| *(manual, outside the workflow)* | `src/resume_generator.py` — optional, off by default |
+| *(automated version of the manual step)* | `src/resume_generator.py` + `src/drive.py` — drafts and uploads a tailored resume PDF per job |
 | *(new)* | `src/scraper_authenticated.py` — optional, logged-in scraping via session cookies |
 
 ## Setup
@@ -43,7 +43,18 @@ in your Google Sheet.
    # then fill in APIFY_API_TOKEN, OPENAI_API_KEY, GOOGLE_SERVICE_ACCOUNT_FILE
    ```
 
-6. **Run**
+6. **Google Drive access for generated resumes** (only needed if `resume_generation.enabled: true`,
+   which is the default):
+   - Create a Drive folder to hold generated resumes (or use an existing one).
+   - Share it with the service account's email — the same `client_email` from `service_account.json`
+     you used in step 4 — with **Editor** access.
+   - Put that folder's ID in `config.yaml` under `resume_generation.drive_folder_id` (the ID is the
+     part of the folder's URL after `/folders/`).
+   - Why sharing is required: the service account has its own separate Drive space, invisible to you.
+     Files it creates only become visible in *your* Drive if they're created inside a folder you've
+     explicitly shared with it.
+
+7. **Run**
 
    ```bash
    python main.py
@@ -75,8 +86,23 @@ in your Google Sheet.
 - `batching.batch_size` — how many jobs are processed per loop iteration (cosmetic here, kept for parity with n8n).
 - `scoring.model` / `scoring.score_threshold` — OpenAI model and the score cutoff (jobs with score > threshold get written to the sheet).
 - `google_sheets` — spreadsheet ID, worksheet name, and the column used to match existing rows (`Job ID`).
-- `resume_generation.enabled` — off by default. Turn on to auto-draft and render a tailored 2-page resume PDF (using OpenAI + reportlab) for every job that clears the threshold, saved to `output/resumes/`. This replaces manually pasting the sheet's `Prompt` column into Gemini/Canvas — same underlying prompt, fully automated. If you'd rather keep doing that manually, leave it off; the `Prompt` column is still populated in the sheet either way.
+- `resume_generation.enabled` — on by default. Auto-drafts and renders a tailored 2-page resume PDF (using OpenAI + reportlab) for every job that clears the threshold, saved to `output/resumes/` and uploaded to `drive_folder_id` in Drive. This replaces manually pasting the sheet's `Prompt` column into Gemini/Canvas — same underlying prompt, fully automated. Set to `false` if you'd rather keep doing that manually; the `Prompt` column is still populated in the sheet either way.
+- `resume_generation.drive_folder_id` / `share_with_email` — where generated PDFs get uploaded, and who gets explicit access to each one (see setup step 6 above). The resulting link is written into the sheet's `Resume Link` column.
 - `candidate` — your contact details, used in the sheet's `Prompt` column and in resume generation.
+
+## Regenerating a resume for a job already in the sheet
+
+`main.py` only generates resumes for jobs it just scraped and scored in that same run. To (re)generate
+one for a job that's *already* sitting in the sheet — no re-scraping or re-scoring — use:
+
+```bash
+python generate_resume_for_job.py <job_id>
+```
+
+It looks up that row's `Prompt` column (the exact tailoring instructions saved when the job was first
+scored), drafts and renders the PDF the same way, uploads it to Drive, and updates that row's `Resume
+Link` column. Useful for retrying a job whose resume generation failed, or for older rows saved before
+`resume_generation` existed.
 
 ## Candidate profile data (`data/`)
 
@@ -105,9 +131,10 @@ the whole runner when the job finishes.
      exported cookies JSON) and `LINKEDIN_USER_AGENT`
 2. Go to the **Actions** tab → **Run Job Search Agent** → **Run workflow**. It's manual-trigger-only
    (no schedule), so it only runs — and only spends Apify/OpenAI usage — when you click it.
-3. Results land in your Google Sheet as usual. If `resume_generation.enabled` is on, the generated
-   PDFs are attached to the workflow run as a downloadable artifact (the runner itself is thrown away
-   after each run, so nothing persists there otherwise).
+3. Results land in your Google Sheet as usual. Since `resume_generation.enabled` is on by default,
+   generated PDFs get uploaded to your Drive folder (linked in the sheet's `Resume Link` column) —
+   that's what actually persists, since the GitHub-hosted runner itself is thrown away after each run.
+   They're also attached to the workflow run as a downloadable artifact as a backup.
 
 ## Notes
 

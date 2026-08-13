@@ -131,3 +131,32 @@ class JobsSheet:
         self._ws.append_row(ordered_values)
         logger.info("Appended new row for Job ID %s", match_value)
         return "appended"
+
+    def get_row(self, job_id: str) -> dict[str, str] | None:
+        """Fetches an existing row by Job ID as a {column: value} dict, or
+        None if no row matches. Used to pull a job that's already in the
+        sheet (e.g. for regenerating a resume) without re-scraping/scoring."""
+
+        row_idx = self._find_row_index(job_id)
+        if row_idx is None:
+            return None
+
+        values = self._ws.row_values(row_idx)
+        # row_values() can come back shorter than the header if trailing
+        # cells are empty — pad so zip() doesn't silently drop columns.
+        values += [""] * (len(self._header) - len(values))
+        return dict(zip(self._header, values))
+
+    def update_cell(self, job_id: str, column: str, value: str) -> bool:
+        """Updates a single column for the row matching job_id. Returns False
+        if no matching row was found (no-op), True if updated."""
+
+        row_idx = self._find_row_index(job_id)
+        if row_idx is None:
+            logger.warning("No row found for Job ID %s, can't update %r.", job_id, column)
+            return False
+
+        col_idx = self._header.index(column) + 1
+        self._ws.update_cell(row_idx, col_idx, value)
+        logger.info("Updated %r for Job ID %s", column, job_id)
+        return True

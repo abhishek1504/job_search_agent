@@ -117,6 +117,22 @@ def main():
                     logger.info("Generated tailored resume: %s", path)
                 except Exception:
                     logger.exception("Resume generation failed for job %r.", title)
+                else:
+                    folder_id = resume_cfg.get("drive_folder_id")
+                    if folder_id:
+                        try:
+                            from src.drive import upload_resume
+
+                            link = upload_resume(
+                                settings,
+                                path,
+                                folder_id,
+                                share_with_email=resume_cfg.get("share_with_email"),
+                            )
+                            sheet.update_cell(row["Job ID"], "Resume Link", link)
+                            logger.info("Resume uploaded to Drive and linked in sheet: %s", link)
+                        except Exception:
+                            logger.exception("Drive upload failed for job %r (PDF still saved locally).", title)
 
     logger.info("Done. %d/%d job(s) cleared the score threshold (>%d).", total_matched, len(jobs), threshold)
 

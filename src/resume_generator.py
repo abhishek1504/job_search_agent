@@ -141,19 +141,22 @@ def _page_count(path: Path) -> int:
     return len(PdfReader(str(path)).pages)
 
 
-def generate_resume(
+def generate_resume_from_prompt(
     client: OpenAI,
-    job: dict[str, Any],
-    candidate: dict[str, str],
+    prompt_text: str,
+    company_name: str,
     model: str,
     max_pages: int,
     output_dir: Path,
 ) -> Path:
-    output_dir.mkdir(parents=True, exist_ok=True)
-    company = (job.get("companyName") or "Unknown").strip().replace("/", "-")
-    output_path = output_dir / f"Resume_{company}.pdf"
+    """Core generator: takes the already-built tailoring prompt (the same text
+    that lives in the sheet's 'Prompt' column) and renders a PDF from it. Used
+    both for freshly-scored jobs (main.py) and for regenerating a resume for a
+    job already sitting in the sheet (generate_resume_for_job.py)."""
 
-    prompt_text = build_prompt_column(job, candidate)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    company = (company_name or "Unknown").strip().replace("/", "-")
+    output_path = output_dir / f"Resume_{company}.pdf"
 
     resume_json = _draft_resume_json(client, model, prompt_text)
     _render_pdf(resume_json, output_path)
@@ -170,3 +173,21 @@ def generate_resume(
 
     logger.info("Resume saved to %s (%d page(s))", output_path, _page_count(output_path))
     return output_path
+
+
+def generate_resume(
+    client: OpenAI,
+    job: dict[str, Any],
+    candidate: dict[str, str],
+    model: str,
+    max_pages: int,
+    output_dir: Path,
+) -> Path:
+    """Convenience wrapper for the fresh-scrape flow (main.py): builds the
+    tailoring prompt from a scraped job dict + candidate profile, same as
+    before."""
+
+    prompt_text = build_prompt_column(job, candidate)
+    return generate_resume_from_prompt(
+        client, prompt_text, job.get("companyName", ""), model, max_pages, output_dir
+    )

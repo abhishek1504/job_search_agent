@@ -82,10 +82,19 @@ google_sheets:
   match_column: "Job ID"   # appendOrUpdate key, same as n8n
 
 resume_generation:
-  enabled: false   # opt-in; set true to auto-draft + render a tailored PDF for each job that clears the score threshold
+  enabled: true   # auto-draft + render a tailored PDF for each job that clears the score threshold
   model: "gpt-5-mini"
   max_pages: 2
-  output_dir: "output/resumes"
+  output_dir: "output/resumes"   # local copy, also kept as a GitHub Actions artifact when run there
+  # Google Drive folder generated resumes get uploaded to, so they persist beyond a
+  # local run or an ephemeral GitHub Actions runner, and so the sheet's "Resume Link"
+  # column has somewhere real to point to.
+  # One-time setup: share this folder with the service account's email (the
+  # "client_email" field inside service_account.json) as an Editor.
+  drive_folder_id: "1bGWCzDyG1tm8uIZsb6XHQTXAtleMV-4_"   # "Job Search — Resumes" in your Drive
+  # Also explicitly grants this address access to each uploaded file (belt-and-braces
+  # on top of the folder share). Defaults to candidate.email below.
+  share_with_email: "abhisheksharma.dsc@gmail.com"
 
 candidate:
   name: "Abhishek Sharma"
