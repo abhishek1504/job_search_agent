@@ -12,6 +12,10 @@ apify:
   # Passed through to the actor as-is (see https://apify.com/cheap_scraper/linkedin-job-scraper/input-schema
   # for the full field list). Edit freely to change keywords/locations/filters.
   actor_input:
+    # Actor uses pay-per-result billing with a 150-result minimum charge regardless of
+    # what's requested — setting this below 150 only risks fewer results for the same
+    # cost floor, so keep it at 150 (or raise it if you want more per run).
+    maxItems: 150
     enrichCompanyData: false
     excludeRecruitingAgencies: false
     experienceLevel:
