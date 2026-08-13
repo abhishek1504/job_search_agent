@@ -1,0 +1,90 @@
+# Job Search Agent configuration
+# Mirrors the settings that were hardcoded in the n8n "Job Automation" workflow.
+
+# Which scraper to use:
+#   "public"        - anonymous, logged-out LinkedIn search (default, lower account risk)
+#   "authenticated"  - uses your logged-in LinkedIn session cookies for personalized results
+scraper_mode: "public"
+
+apify:
+  actor_id: "2rJKkhh7vjpX7pvjg"  # cheap_scraper/linkedin-job-scraper
+  memory_mb: 4096
+  # Passed through to the actor as-is (see https://apify.com/cheap_scraper/linkedin-job-scraper/input-schema
+  # for the full field list). Edit freely to change keywords/locations/filters.
+  actor_input:
+    enrichCompanyData: false
+    excludeRecruitingAgencies: false
+    experienceLevel:
+      - "mid-senior"
+    filterEasyApply: false
+    filterUnder10Applicants: false
+    jobType:
+      - "full-time"
+    locations:
+      - "Hyderabad, India"
+    publishedAt: "r604800"
+    requireRecruiterProfile: false
+    requireSalaryInfo: false
+    resumeKeywords:
+      - keyword: "TypeScript"
+        aliases: ["TS", "JS", "JavaScript"]
+      - keyword: "Node.js"
+        aliases: ["Node", "NodeJS"]
+      - keyword: "React"
+        aliases: ["RN", "React Native", "Expo", "ReactJS"]
+      - keyword: "SQL"
+        aliases: ["PostgreSQL"]
+      - keyword: "Tools"
+        aliases: ["Git", "Docker", "Jira", "Postman", "GitHub", "GitLab", "GitHub Copilot", "Webpack"]
+      - keyword: "Artificial Intelligence"
+        aliases: ["AI", "Langchain", "Langgraph", "RAG", "Generative AI", "Agentic AI"]
+    saveOnlyUniqueItems: false
+    startUrls:
+      - url: "https://in.linkedin.com/jobs/engineering-manager-jobs-hyderabad?keywords=Engineering%20Manager&location=Hyderabad&geoId=105556991&distance=50&f_TPR=r604800&activeFilter=f_TPR&position=1&pageNum=0"
+      - url: "https://in.linkedin.com/jobs/search?keywords=Full%20Stack%20Engineer&location=Hyderabad&geoId=105556991&distance=50&f_TPR=r604800&activeFilter=f_TPR&position=1&pageNum=0"
+      - url: "https://in.linkedin.com/jobs/search?keywords=AI%20Engineer&location=Hyderabad&geoId=105556991&distance=50&f_TPR=r604800&activeFilter=f_TPR&position=1&pageNum=0"
+    workType:
+      - "on-site"
+      - "remote"
+      - "hybrid"
+
+# Only used when scraper_mode = "authenticated".
+# Requires LINKEDIN_COOKIES_FILE and LINKEDIN_USER_AGENT in .env (see .env.example).
+apify_authenticated:
+  actor_id: "gdbRh93zn42kBYDyS"  # curious_coder/linkedin-jobs-search-scraper ("Advanced Linkedin Job Scraper")
+  memory_mb: 4096
+  scrape_job_details: true
+  scrape_skills: true
+  scrape_company: true
+  count: 100   # max jobs per search URL; leave null for "all"
+  fallback_to_public: true   # if the authenticated run fails (e.g. expired cookies), fall back to the public scraper for that run
+  search_urls:
+    - "https://www.linkedin.com/jobs/search?keywords=Lead%20Engineer&location=Hyderabad&geoId=105556991&trk=public_jobs_jobs-search-bar_search-submit&position=1&pageNum=0"
+    - "https://www.linkedin.com/jobs/search?keywords=Software%20Engineering%20Manager%20Frontend&location=Hyderabad&geoId=105556991&trk=public_jobs_jobs-search-bar_search-submit&position=1&pageNum=0"
+    - "https://in.linkedin.com/jobs/search?keywords=AI%20Architect&location=Hyderabad&geoId=105556991&trk=public_jobs_jobs-search-bar_search-submit&position=1&pageNum=0"
+    - "https://in.linkedin.com/jobs/search?keywords=Engineering%2BManager%2BReact%2BUI&location=Hyderabad&geoId=105556991&trk=public_jobs_jobs-search-bar_search-submit&currentJobId=4438474563&position=3&pageNum=0"
+    - "https://in.linkedin.com/jobs/full-stack-technical-lead-jobs-hyderabad?position=1&pageNum=0"
+
+batching:
+  batch_size: 5   # matches the n8n "Loop Over Items" node
+
+scoring:
+  model: "gpt-5-mini"
+  score_threshold: 7   # strictly greater than -> matches n8n Filter node (score > 7)
+
+google_sheets:
+  spreadsheet_id: "1O_xIDTP54i2nZoUUo47YI-CO52jd08E2lahNEDNlZ5s"
+  worksheet_name: "Sheet1"
+  match_column: "Job ID"   # appendOrUpdate key, same as n8n
+
+resume_generation:
+  enabled: false   # opt-in; set true to auto-draft + render a tailored PDF for each job that clears the score threshold
+  model: "gpt-5-mini"
+  max_pages: 2
+  output_dir: "output/resumes"
+
+candidate:
+  name: "Abhishek Sharma"
+  email: "abhisheksharma.dsc@gmail.com"
+  phone: "+91-9811283725"
+  github: "https://github.com/abhishek1504"

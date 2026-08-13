@@ -1,0 +1,22 @@
+Abhishek Sharma — AVP, Engineering Lead, based in Hyderabad, Telangana, India (500+ connections, open to work opportunities for recruiters).
+Headline/About: Over a decade of experience shipping products across payroll systems, web, and mobile, having worked with brands like KFC, Kohl's, and Hindustan Unilever. Currently leads engineering for a fintech platform at GajiGesa (part of Kredivo Group), owning the roadmap-to-release cycle for a React Native app on AWS. Recently focused on AI agents, MCP, and tool-calling, while reflecting on how core fundamentals like system design and data structures/algorithms remain relevant in an AI-driven development era.
+Experience (most recent first):
+
+Assistant Vice President – Engineering, GajiGesa (acquired by Kredivo Group) — Oct 2022–Present (Remote)
+Head of Mobility, Integrum Technologies — May 2022–Sep 2022
+Manager, Capgemini — Sep 2021–May 2022
+Sr. Associate – Projects, Cognizant — Feb 2016–Sep 2021 (delivered mobile/web products for KFC, Kohl's, and others)
+Sr. Software Developer, Accrete Solutions LLC — Feb 2013–Feb 2016
+
+Education:
+
+Institute of Management Studies, Dehradun — M.C.A, Computers (2005–2008)
+Delhi University — B.Sc(H), Mathematics (2002–2005)
+(Two more entries listed under "Show all 4 educations")
+
+Top Skills: React Native, JavaScript, Webpack, GraphQL, Python (48 skills total listed on profile).
+Services Offered: IT Consulting, Mobile Application Development, iOS Development, Android Development.
+Certifications: Several licenses including a "Certificate of completion: Claude Platform 101" from Anthropic (issued June 2026); 7 licenses total on profile.
+Projects: "Automated chess-pipeline for YouTube" (Jun 2026), built for creating chess.com gameplay content.
+Recommendations: 16 received, 12 given — colleagues describe you as a versatile, quick-learning React Native specialist and a strong technical asset.
+Recent Activity: Frequent posts on AI topics — spec-driven development, agentic AI architecture for frontend developers, a home automation project using Claude + MCP + Home Assistant, and a weekend project called "DBChat" (natural language to PostgreSQL using LangChain and Groq). Your posts have generated solid engagement, with your top post reaching 2,363 impressions.
