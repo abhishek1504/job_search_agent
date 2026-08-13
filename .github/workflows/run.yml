@@ -10,6 +10,9 @@ jobs:
   run-agent:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # Required to access secrets stored under the "prod" environment
+    # (Settings -> Environments -> prod) rather than as plain repo secrets.
+    environment: prod
 
     steps:
       - name: Checkout repo
