@@ -82,7 +82,10 @@ google_sheets:
   match_column: "Job ID"   # appendOrUpdate key, same as n8n
 
 resume_generation:
-  enabled: true   # auto-draft + render a tailored PDF for each job that clears the score threshold
+  # Keep false: resume generation stays manual-only, decoupled from scraping/scoring, via
+  # `python generate_resume_for_job.py <job_id>`. Flip to true only if you want main.py to
+  # also auto-generate one inline for every job that clears the threshold during a scrape run.
+  enabled: false
   model: "gpt-5-mini"
   max_pages: 2
   output_dir: "output/resumes"   # local copy, also kept as a GitHub Actions artifact when run there

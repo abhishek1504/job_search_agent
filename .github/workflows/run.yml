@@ -1,10 +1,16 @@
 name: Run Job Search Agent
 
-# Manual trigger only — click "Run workflow" in the Actions tab whenever you
-# want a fresh scrape + score + Google Sheet update. No schedule, so it never
-# burns Apify/OpenAI usage without you asking for it.
+# Runs daily on a schedule, plus you can click "Run workflow" in the Actions
+# tab any time for an on-demand run. GitHub Actions cron uses UTC and can be
+# delayed a few minutes during periods of high load — fine for a daily job
+# like this, but don't rely on the exact minute. Scheduled workflows are also
+# auto-disabled by GitHub after 60 days with no commits to the repo — push
+# something occasionally, or re-enable it manually from the Actions tab if
+# that happens.
 on:
   workflow_dispatch: {}
+  schedule:
+    - cron: "30 0 * * *"   # 00:30 UTC = 6:00 AM IST daily
 
 jobs:
   run-agent:

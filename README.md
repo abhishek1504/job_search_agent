@@ -86,7 +86,7 @@ in your Google Sheet.
 - `batching.batch_size` — how many jobs are processed per loop iteration (cosmetic here, kept for parity with n8n).
 - `scoring.model` / `scoring.score_threshold` — OpenAI model and the score cutoff (jobs with score > threshold get written to the sheet).
 - `google_sheets` — spreadsheet ID, worksheet name, and the column used to match existing rows (`Job ID`).
-- `resume_generation.enabled` — on by default. Auto-drafts and renders a tailored 2-page resume PDF (using OpenAI + reportlab) for every job that clears the threshold, saved to `output/resumes/` and uploaded to `drive_folder_id` in Drive. This replaces manually pasting the sheet's `Prompt` column into Gemini/Canvas — same underlying prompt, fully automated. Set to `false` if you'd rather keep doing that manually; the `Prompt` column is still populated in the sheet either way.
+- `resume_generation.enabled` — **off by default, on purpose.** Resume generation is kept decoupled from scraping/scoring while the output quality is still being refined — see "Regenerating a resume for a job already in the sheet" below for the manual, on-demand path. Flip to `true` only if you want `main.py` to also auto-generate one inline for every job that clears the threshold during a scrape run.
 - `resume_generation.drive_folder_id` / `share_with_email` — where generated PDFs get uploaded, and who gets explicit access to each one (see setup step 6 above). The resulting link is written into the sheet's `Resume Link` column.
 - `candidate` — your contact details, used in the sheet's `Prompt` column and in resume generation.
 
@@ -113,13 +113,12 @@ Link` column. Useful for retrying a job whose resume generation failed, or for o
 
 Edit these freely — they're plain text, no need to touch the code.
 
-## Running it from GitHub Actions
+## Running it from GitHub Actions (daily + on demand)
 
 `.env` and `service_account.json` hold real secrets, so they're gitignored and never get pushed to
-GitHub (see `.gitignore`). To run the agent from GitHub itself instead of your own machine, use
-GitHub Actions Secrets — the workflow at `.github/workflows/run.yml` writes `.env` and
-`service_account.json` from those secrets at the start of each run, then deletes itself along with
-the whole runner when the job finishes.
+GitHub (see `.gitignore`). The workflow at `.github/workflows/run.yml` writes `.env` and
+`service_account.json` from GitHub Actions Secrets at the start of each run, then discards them
+along with the whole runner when the job finishes.
 
 1. On GitHub, go to your repo → **Settings → Secrets and variables → Actions → New repository secret**,
    and add:
@@ -129,12 +128,18 @@ the whole runner when the job finishes.
      (the whole JSON, not a file path)
    - Optional, only if you use `scraper_mode: "authenticated"`: `LINKEDIN_COOKIES_JSON` (entire
      exported cookies JSON) and `LINKEDIN_USER_AGENT`
-2. Go to the **Actions** tab → **Run Job Search Agent** → **Run workflow**. It's manual-trigger-only
-   (no schedule), so it only runs — and only spends Apify/OpenAI usage — when you click it.
-3. Results land in your Google Sheet as usual. Since `resume_generation.enabled` is on by default,
-   generated PDFs get uploaded to your Drive folder (linked in the sheet's `Resume Link` column) —
-   that's what actually persists, since the GitHub-hosted runner itself is thrown away after each run.
-   They're also attached to the workflow run as a downloadable artifact as a backup.
+   - If these are set as **environment** secrets rather than plain repo secrets (e.g. under a `prod`
+     environment), the job in `run.yml` needs a matching `environment: prod` line — already there if
+     that's how yours are set up.
+2. It runs automatically every day at 6:00 AM IST (`30 0 * * *` UTC cron in `run.yml` — edit that line
+   to change the time). You can also trigger it any time on demand: **Actions** tab → **Run Job Search
+   Agent** → **Run workflow**.
+3. Results land in your Google Sheet as usual. Resume generation doesn't run as part of this
+   workflow (`resume_generation.enabled` is off by default) — run `generate_resume_for_job.py`
+   locally when you want one for a specific job.
+
+Note: GitHub disables scheduled workflows automatically after 60 days with no commits to the repo —
+if the daily run silently stops, check **Actions** tab → the workflow → for a re-enable prompt.
 
 ## Notes
 
